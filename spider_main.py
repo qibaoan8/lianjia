@@ -4,12 +4,10 @@ Created on Tue Mar 20 10:35:07 2018
 
 @author: zhangying
 """
-
-from url_manager import UrlManager
-from log import MyLog
-from html_downloader import HtmlDownloader
-from html_parser import HtmlParser
-from html_outputer import HtmlOutputer
+from lib.downloader import HtmlDownloader
+from lib.url_manager import UrlManager
+from lib.log import MyLog
+from lib.html_parser import HtmlParser
 import time
 import random
 
@@ -23,8 +21,31 @@ class SpiderMain():
         self.log = MyLog("spider_main", "logs")
         self.downloader = HtmlDownloader()
         self.parser = HtmlParser()
-        self.outputer = HtmlOutputer()
         # self.util=utill.DBConn()
+
+    def get_xiaoqu_list(self):
+        """
+        获取小区列表
+        """
+        areas_list = [
+            "dongcheng",
+            "xicheng",
+            "chaoyang",
+            "haidian",
+            "fengtai",
+            "shijingshan",
+            "tongzhou",
+            "changping",
+            "shunyi",
+        ]
+
+        for area in areas_list:
+            url = "https://bj.lianjia.com/xiaoqu/dongcheng/"
+            # https://bj.lianjia.com/xiaoqu/dongcheng/pg2/
+            xiaoqu_list = []
+            html_body = self.downloader.download()
+
+
 
     def craw(self, root_url):
         """爬虫入口函数"""
@@ -91,20 +112,7 @@ class SpiderMain():
                 except Exception as e:
                     self.log.logger.error("2.3 解析页面出现异常:" + repr(e))
                 else:
-                    # 2.4 输出数据
-                    try:
-                        self.outputer.collect_data(ershoufang_data)
-                    except Exception as e:
-                        self.log.logger.error("2.4 输出数据出现异常:" + repr(e))
-                    else:
-                        print(id)
-                        id = id + 1
-                        stop = stop + 1
-                        # 暂停0~3秒的整数秒，时间区间：[0,3]
-                        time.sleep(random.randint(0, 3))
-                        if stop == 2500:
-                            stop = 1;
-                            time.sleep(60 * 20)
+                    pass
 
 
 if __name__ == "__main__":

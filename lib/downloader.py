@@ -1,12 +1,19 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Mar 18 16:59:59 2018
+# 
+# Copyright (c) 2018 alibaba-inc. All Rights Reserved
+# 
 
-@author: zhangying
+"""
+File: downloader.py
+Author: wang.gaofei(wang.gaofei@alibaba-inc.com)
+Date: 2021/6/19
 """
 
 import requests
-from log import MyLog
+
+from lib.fuse import Fuse
+from lib.log import MyLog
 import random
 
 
@@ -16,7 +23,7 @@ class HtmlDownloader():
     def __init__(self):
         """构造函数，初始化属性"""
         self.log = MyLog("html_downloader", "logs")
-
+        self.fuse = Fuse()
         self.user_agent = [
             "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0",
             "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; InfoPath.2; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; 360SE) ",
@@ -31,6 +38,9 @@ class HtmlDownloader():
 
     def download(self, url):
         """网页下载函数"""
+
+        self.fuse.check()
+
         if url is None:
             self.log.logger.error("页面下载：url为空!!!")
             return None
@@ -55,14 +65,3 @@ class HtmlDownloader():
         self.log.logger.info("页面下载：成功!")
         print("页面下载：成功!")
         return r.text
-
-        """
-        response = urllib.request.urlopen(url)
-        if response.getcode() != 200:
-            self.log.logger.error("页面下载：响应错误：%d"% response.getcode())
-            return None
-        
-        self.log.logger.info("页面下载：成功!")
-        print("页面下载：成功!")
-        return response.read()
-        """

@@ -6,7 +6,7 @@ Created on Sun Mar 18 17:00:31 2018
 """
 
 from bs4 import BeautifulSoup
-from log import MyLog
+from lib.log import MyLog
 
 
 class HtmlParser():
@@ -14,7 +14,7 @@ class HtmlParser():
 
     def __init__(self):
         """构造函数，初始化属性"""
-        self.log = MyLog("html_parser", "logs")
+        self.log = MyLog("html_parser", "../logs")
 
     def get_ershoufang_data(self, html_cont, id):
         """获取二手房页面详细数据"""

@@ -25,10 +25,14 @@ class Fuse():
         self.time_cycel = 1
         self.max_use_count = 1
 
-    def check(self):
+    def check(self, sleep=0):
         """
         检查是否熔断
         """
+        if sleep > 0:
+            time.sleep(sleep)
+            return
+
         while True:
             now = datetime.datetime.now()
             if (now - self.last_use).seconds >= self.time_cycel:
