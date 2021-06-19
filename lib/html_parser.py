@@ -248,7 +248,7 @@ class HtmlParser():
 
         # price_total
         price_html = bs.find("div", {"class": "price"})
-        price_total = int("".join(price_html.find("span", {"class": "total"}).string)) * 10000
+        price_total = int(float("".join(price_html.find("span", {"class": "total"}).string))) * 10000
 
         # price_unit
         price_unit_text = price_html.find("div", {"class": "unitPrice"}).get_text()
