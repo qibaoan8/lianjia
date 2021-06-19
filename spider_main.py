@@ -77,7 +77,8 @@ class SpiderMain():
                     html_body = self.downloader.download(house_url)
                     house_id = self.parser.lianjia_url_to_house_id(house_url)
                     house = self.parser.get_html_house_detail(xiaoqu.xiaoqu_id, house_id, html_body, update_batch)
-                    ret = xiaoqu_db.insert([house], on_duplicate_update_key=house_db.update_key)
+                    self.log.info("get house: %s" % str(house))
+                    ret = house_db.insert([house], on_duplicate_update_key=house_db.update_key)
                     self.log.info("house db inster ret %s" % ret)
         return
 

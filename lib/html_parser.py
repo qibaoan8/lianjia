@@ -165,10 +165,8 @@ class HtmlParser():
 
         bs = BeautifulSoup(html, "html.parser", from_encoding="utf-8")
         house_content = bs.find("ul", {"class": "sellListContent"})
-        print house_content
         house_content_list = house_content.findAll("li", {"class": "clear LOGVIEWDATA LOGCLICKDATA"})
 
-        print house_content_list
         if not house_content_list:
             return ret_url_list
 
