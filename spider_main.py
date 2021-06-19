@@ -13,6 +13,10 @@ from lib.html_parser import HtmlParser
 import time
 import random
 import math
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 xiaoqu_db = XiaoQuModel()
 

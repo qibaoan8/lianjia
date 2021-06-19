@@ -192,7 +192,7 @@ class HtmlParser():
             xiaoqu.houses = houses  # 在售数量
             xiaoqu.update_batch = update_batch  # 爬取批次
             ret_xiaoqu.append(xiaoqu)
-            self.log.info(repr(xiaoqu))
+            self.log.info(str(xiaoqu))
 
         self.log.info("1.3 PG页面解析：pg页面解析成功！")
         return ret_xiaoqu
