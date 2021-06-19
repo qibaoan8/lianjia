@@ -18,87 +18,7 @@ class HtmlParser():
         """构造函数，初始化属性"""
         self.log = MyLog("html_parser", "../logs").getMyLogger()
 
-    def get_ershoufang_data(self, html_cont, id):
-        """获取二手房页面详细数据"""
-        if html_cont is None:
-            self.log.error("页面解析(detail)：传入页面为空！")
-            return
-
-        ershoufang_data = []
-        communityName = "null"
-        areaName = "null"
-        total = "null"
-        unitPriceValue = "null"
-
-        bsObj = BeautifulSoup(html_cont, "html.parser", from_encoding="utf-8")
-
-        tag_com = bsObj.find("div", {"class": "communityName"}).find("a")
-        if tag_com is not None:
-            communityName = tag_com.get_text()
-        else:
-            self.log.error("页面解析(detail)：找不到communityName标签！")
-
-        tag_area = bsObj.find("div", {"class": "areaName"}).find("span", {"class": "info"}).find("a")
-        if tag_area is not None:
-            areaName = tag_area.get_text()
-        else:
-            self.log.error("页面解析(detail)：找不到areaName标签！")
-
-        tag_total = bsObj.find("span", {"class": "total"})
-        if tag_total is not None:
-            total = tag_total.get_text()
-        else:
-            self.log.error("页面解析(detail)：找不到total标签！")
-
-        tag_unit = bsObj.find("span", {"class": "unitPriceValue"})
-        if tag_unit is not None:
-            unitPriceValue = tag_unit.get_text()
-        else:
-            self.log.error("页面解析(detail)：找不到total标签！")
-
-        ershoufang_data.append(id)
-        ershoufang_data.append(communityName)
-        ershoufang_data.append(areaName)
-        ershoufang_data.append(total)
-        ershoufang_data.append(unitPriceValue)
-
-        # print(bsObj.find("div",{"class":"introContent"}).find("div",{"class":"base"}).find("div",{"class":"content"}).ul)
-        counta = 12
-        for a_child in bsObj.find("div", {"class": "introContent"}).find("div", {"class": "base"}).find("div", {
-            "class": "content"}).ul.findAll("li"):
-            # print(child1)
-            [s.extract() for s in a_child("span")]
-            ershoufang_data.append(a_child.get_text())
-            counta = counta - 1
-
-        while counta > 0:
-            ershoufang_data.append("null")
-            counta = counta - 1
-
-        countb = 8
-        for b_child in bsObj.find("div", {"class": "introContent"}).find("div", {"class": "transaction"}).find("div", {
-            "class": "content"}).ul.findAll("li"):
-            information = b_child.span.next_sibling.next_sibling.get_text()
-            ershoufang_data.append(information)
-            countb = countb - 1
-
-        while countb > 0:
-            ershoufang_data.append("null")
-            countb = countb - 1
-
-        self.log.info("2.3 页面解析(detail)：页面解析成功！")
-        return ershoufang_data
-
-    def get_erhoufang_urls(self, html_cont):
-        """获取二手房页面的链接"""
-        if html_cont is None:
-            self.log.error("页面解析(page)：pg页面为空！")
-            return
-
-        ershoufang_urls = set()
-        bsObj = BeautifulSoup(html_cont, "html.parser", from_encoding="utf-8")
-
-    def lianjia_url_to_id(self, url):
+    def lianjia_url_to_xiaoqu_id(self, url):
         """
         链家小区url内的id提取
         """
@@ -108,6 +28,20 @@ class HtmlParser():
             if last_str[0] == "c":
                 last_str = last_str[1:]
             return last_str
+        except Exception as e:
+            self.log.error("url split error", repr(e))
+        return ""
+
+    def lianjia_url_to_house_id(self, url):
+        """
+        链家房源url内的id提取
+        """
+        # https://bj.lianjia.com/ershoufang/101107712846.html
+        try:
+            strs = re.split('[/.]+', url)
+            id = strs[len(strs) - 2]
+            if id:
+                return id
         except Exception as e:
             self.log.error("url split error", repr(e))
         return ""
@@ -151,7 +85,7 @@ class HtmlParser():
             # url 、 name 、 area
             url = child.a["href"]
             name = child.find("div", {"class": "title"}).get_text().replace("\n", "")
-            xiaoqu_id = self.lianjia_url_to_id(url)
+            xiaoqu_id = self.lianjia_url_to_xiaoqu_id(url)
             positionInfo = child.find("div", {"class": "positionInfo"})
             info_list = positionInfo.findAll("a")
             if len(info_list) >= 2:
@@ -212,11 +146,132 @@ class HtmlParser():
 
         return int(span.text)
 
-    def get_html_house_count(self, html_body):
-        pass
+    def get_html_house_count(self, html):
+        """
+        获取页面内房源的总数
+        """
+        bs = BeautifulSoup(html, "html.parser", from_encoding="utf-8")
+        h2 = bs.find("h2", {"class": "total fl"})
+        span = h2.find("span")
+        return int(span.text)
 
-    def get_html_house_detail(self, html_body, update_batch):
-        pass
+    def get_html_house_url_list(self, html):
+        """
+        从html内提取房源url
+        """
+        ret_url_list = []
 
-    def get_html_house_url_list(self, html_body):
-        pass
+        bs = BeautifulSoup(html, "html.parser", from_encoding="utf-8")
+        house_content = bs.find("ul", {"class": "sellListContent"})
+        print house_content
+        house_content_list = house_content.findAll("li", {"class": "clear LOGVIEWDATA LOGCLICKDATA"})
+
+        print house_content_list
+        if not house_content_list:
+            return ret_url_list
+
+        for house_info in house_content_list:
+            url = house_info.a["href"]
+            ret_url_list.append(url)
+        return ret_url_list
+
+    def get_html_house_detail(self, house_id, html_body, update_batch):
+        """
+        从html 内提取房源详细信息
+        """
+
+        house_id = house_id
+        # 标题
+        house_title = ""
+        # 好房
+        is_good_house = False
+        # 总价
+        price_total = 0
+        # 单价
+        price_unit = 0
+        # 房屋户型
+        bed_room = 1
+        living_room = 1
+        # 建筑面积
+        house_size = 0.0
+        # 房屋朝向
+        house_orientation = ""
+        # 配备电梯
+        have_elevator = False
+        # 挂牌时间
+        listing_time = None
+
+        # title
+        bs = BeautifulSoup(html_body, "html.parser", from_encoding="utf-8")
+        house_title = bs.find("h1", {"class": "main"}).get_text()
+        print house_title
+
+        # is_good_house
+        html_a = bs.find("a", {"class": "haofangInfo CLICKDATA VIEWDATA"})
+        if html_a:
+            is_good_house = True
+        print is_good_house
+
+        # price_total
+        price_html = bs.find("div", {"class": "price"})
+        price_total = int("".join(price_html.find("span", {"class": "total"}).string)) * 10000
+        # price_unit
+
+        price_unit_text = price_html.find("div", {"class": "unitPrice"}).get_text()
+        price_unit = int(price_unit_text.split(u"元")[0])
+        print price_unit
+
+        return
+
+        ershoufang_data = []
+        communityName = "null"
+        areaName = "null"
+        total = "null"
+        unitPriceValue = "null"
+
+        tag_com = bs.find("div", {"class": "communityName"}).find("a")
+
+        tag_total = bs.find("span", {"class": "total"})
+        if tag_total is not None:
+            total = tag_total.get_text()
+        else:
+            self.log.error("页面解析(detail)：找不到total标签！")
+
+        tag_unit = bs.find("span", {"class": "unitPriceValue"})
+        if tag_unit is not None:
+            unitPriceValue = tag_unit.get_text()
+        else:
+            self.log.error("页面解析(detail)：找不到total标签！")
+
+        ershoufang_data.append(id)
+        ershoufang_data.append(communityName)
+        ershoufang_data.append(areaName)
+        ershoufang_data.append(total)
+        ershoufang_data.append(unitPriceValue)
+
+        # print(bsObj.find("div",{"class":"introContent"}).find("div",{"class":"base"}).find("div",{"class":"content"}).ul)
+        counta = 12
+        for a_child in bs.find("div", {"class": "introContent"}).find("div", {"class": "base"}).find("div", {
+            "class": "content"}).ul.findAll("li"):
+            # print(child1)
+            [s.extract() for s in a_child("span")]
+            ershoufang_data.append(a_child.get_text())
+            counta = counta - 1
+
+        while counta > 0:
+            ershoufang_data.append("null")
+            counta = counta - 1
+
+        countb = 8
+        for b_child in bs.find("div", {"class": "introContent"}).find("div", {"class": "transaction"}).find("div", {
+            "class": "content"}).ul.findAll("li"):
+            information = b_child.span.next_sibling.next_sibling.get_text()
+            ershoufang_data.append(information)
+            countb = countb - 1
+
+        while countb > 0:
+            ershoufang_data.append("null")
+            countb = countb - 1
+
+        self.log.info("2.3 页面解析(detail)：页面解析成功！")
+        return ershoufang_data

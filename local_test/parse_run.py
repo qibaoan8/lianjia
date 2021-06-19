@@ -28,6 +28,7 @@ def main_test_xiaoqu():
         print i
     # xiaoqu_db.insert(ret_list)
 
+
 def main_test_house_list():
     html = ""
     with open("house_list.html") as f:
@@ -37,5 +38,19 @@ def main_test_house_list():
     count = hp.get_html_house_count(html)
     print count
 
+    url_list = hp.get_html_house_url_list(html)
+    print url_list
+
+
+def main_test_house_detail():
+    html = ""
+    with open("house_detail.html") as f:
+        html = f.read()
+
+    hp = HtmlParser()
+    house = hp.get_html_house_detail("1", html, "1")
+    print house
+
+
 if __name__ == '__main__':
-    main_test_house_list()
+    main_test_house_detail()
