@@ -115,7 +115,7 @@ class HtmlParser():
             print "url split error", repr(e)
         return ""
 
-    def get_html_xiaoqu_list(self, html):
+    def get_html_xiaoqu_list(self, html, update_batch):
         """
         从html内提取小区信息
         """
@@ -175,7 +175,11 @@ class HtmlParser():
 
             # 均价
             totalPrice = child.find("div", {"class": "totalPrice"})
-            price = int("".join(totalPrice.find("span").string))
+            price_text = "".join(totalPrice.find("span").string)
+            try:
+                price = int(price_text)
+            except Exception as e:
+                price = 0
 
             # 在售数量
             xiaoquListItemSellCount = child.find("div", {"class": "xiaoquListItemSellCount"})
@@ -190,6 +194,7 @@ class HtmlParser():
             xiaoqu.turnover = turnover  # 成交量
             xiaoqu.price = price  # 均价
             xiaoqu.houses = houses  # 在售数量
+            xiaoqu.update_batch = update_batch  # 爬取批次
             ret_xiaoqu.append(xiaoqu)
             self.log.logger.info(repr(xiaoqu))
 
@@ -212,5 +217,3 @@ class HtmlParser():
         span = h2.find("span")
 
         return int(span.text)
-
-

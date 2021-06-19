@@ -4,7 +4,7 @@ Created on Tue Mar 20 10:35:07 2018
 
 @author: zhangying
 """
-
+from config.conf import area_map
 from lib.downloader import HtmlDownloader
 from lib.model_table import XiaoQuModel
 from lib.url_manager import UrlManager
@@ -28,7 +28,7 @@ class SpiderMain():
         self.parser = HtmlParser()
         # self.util=utill.DBConn()
 
-    def get_xiaoqu_list(self):
+    def get_xiaoqu_list(self, update_batch):
         """
         获取小区列表
         """
@@ -48,16 +48,28 @@ class SpiderMain():
             url_meta = "https://bj.lianjia.com/xiaoqu/%s/" % area
             # https://bj.lianjia.com/xiaoqu/dongcheng/pg2/
             html_body = self.downloader.download(url_meta)
-            count = self.parser.get_html_xiaoqu_count(html_body)
-            if count <= 0:
+            total_count = self.parser.get_html_xiaoqu_count(html_body)
+            if total_count <= 0:
                 continue
             page_size = 30.0
-            for page in range(1, int(math.ceil(count / page_size)) + 1):
+
+            # 查询库里有多少条，然后从多少页开始；
+            area_zh = area_map.get(area, "")
+            exsit_count = len(xiaoqu_db.filter({"area": area_zh}))
+            if exsit_count >= total_count:
+                self.log.logger.info("%s 小区数据全部存在" % area_zh)
+                continue
+
+            start_page = int(exsit_count / page_size) + 1
+            self.log.logger.info("%s 小区从第%s页开始获取" % (area_zh, start_page))
+
+            for page in range(start_page, int(math.ceil(total_count / page_size)) + 1):
                 url = "%spg%s/" % (url_meta, page)
                 html_body = self.downloader.download(url)
-                xiaoqu_list = self.parser.get_html_xiaoqu_list(html_body)
-                ret = xiaoqu_db.insert(xiaoqu_list)
+                xiaoqu_list = self.parser.get_html_xiaoqu_list(html_body, update_batch)
+                ret = xiaoqu_db.insert(xiaoqu_list, on_duplicate_update_key=xiaoqu_db.update_key)
                 print "xiaoqu db inster ret %s" % ret
+                return
         return
 
     def craw(self, root_url):
@@ -131,4 +143,4 @@ class SpiderMain():
 if __name__ == "__main__":
     # 初始化爬虫对象
     obj_spider = SpiderMain()
-    obj_spider.get_xiaoqu_list()
+    obj_spider.get_xiaoqu_list(1)

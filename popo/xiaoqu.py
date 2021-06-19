@@ -36,6 +36,7 @@ class XiaoQu():
         self.turnover = ""  # 成交量
         self.price = 0  # 均价
         self.houses = 0  # 在售数量
+        self.update_batch = 0  # 爬取批次
         self.other = {}
 
     def __str__(self):

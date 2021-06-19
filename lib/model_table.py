@@ -22,6 +22,7 @@ class XiaoQuModel(BaseModel):
     def __init__(self):
         super(XiaoQuModel, self).__init__()
         self.table = "xiaoqu"
+        self.update_key = ["area", "area_2", "xiaoqu_name", "build_year", "turnover", "price", "houses", "other"]
 
     def json_to_object(self, _input):
         """ 将json 转换成对象 """
@@ -54,4 +55,3 @@ class XiaoQuModel(BaseModel):
             return ret
         else:
             return {}
-

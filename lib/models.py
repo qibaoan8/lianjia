@@ -62,7 +62,7 @@ class BaseModel(object):
         limit_str = self.__parse_limit(limit)
         sql = "select * from %s %s" % (self.table, limit_str)
         ret = self.query(sql, dictionary=dictionary)
-        return self.json_to_object(ret)
+        return ret
 
     def get(self, limit=0, offset=0, dictionary=True, **kwargs):
         """
@@ -99,7 +99,7 @@ class BaseModel(object):
         limit_str = self.__parse_limit(limit=limit, offset=offset)
         sql = "select %s from %s %s %s %s" % (cols_str, self.table, con_str, order_str, limit_str)
         ret = self.query(sql, dictionary=dictionary)
-        return self.json_to_object(ret)
+        return ret
 
     def query(self, sql, dictionary=True):
         """

@@ -38,7 +38,7 @@ class HtmlDownloader():
 
     def download(self, url):
         """网页下载函数"""
-
+        self.log.logger.info("get url : %s" % url)
         self.fuse.check()
 
         if url is None:
