@@ -66,8 +66,9 @@ class HouseModel(BaseModel):
     def __init__(self):
         super(HouseModel, self).__init__()
         self.table = "house"
-        self.update_key = ["house_title", "is_good_house", "price_total", "price_unit", "other", "bedroom",
-                           "living_room", "house_size", "house_orientation", "have_elevator", "listing_time"]
+        self.update_key = ["house_title", "is_good_house", "price_total", "price_unit", "other", "bed_room",
+                           "living_room", "kitchen_room", "bath_room", "house_size", "house_orientation",
+                           "have_elevator", "listing_time"]
 
     def json_to_object(self, _input):
         """ 将json 转换成对象 """

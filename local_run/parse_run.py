@@ -12,9 +12,13 @@ Date: 2021/6/19
 import json
 
 from lib.html_parser import HtmlParser
-from lib.model_table import XiaoQuModel
+from lib.model_table import XiaoQuModel, HouseModel
+import sys
 
+reload(sys)
+sys.setdefaultencoding('utf-8')
 xiaoqu_db = XiaoQuModel()
+house_db = HouseModel()
 
 
 def main_test_xiaoqu():
@@ -44,13 +48,27 @@ def main_test_house_list():
 
 def main_test_house_detail():
     html = ""
-    with open("house_detail.html") as f:
+    with open("house_detail_good.html") as f:
         html = f.read()
 
     hp = HtmlParser()
-    house = hp.get_html_house_detail("1", html, "1")
+    house = hp.get_html_house_detail("1", "1", html, "1")
     print house
+    house_db.insert([house], on_duplicate_update_key=house_db.update_key)
+
+
+def main_split():
+    hp = HtmlParser()
+    print hp.string_get_huxing_info(u"房屋户型2室1厅1厨1卫")
 
 
 if __name__ == '__main__':
     main_test_house_detail()
+
+    # # coding:utf-8
+    # from bs4 import BeautifulSoup
+    #
+    # soup = BeautifulSoup('<div>早上9点了</div>你好世界<div>世界和平</div>')
+    # info = [s.extract() for s in soup('div')]
+    # print(info)
+    # print(soup.text)

@@ -4,10 +4,12 @@ Created on Sun Mar 18 17:00:31 2018
 
 @author: zhangying
 """
+import datetime
 import re
 
 from bs4 import BeautifulSoup
 from lib.log import MyLog
+from popo.house import House
 from popo.xiaoqu import XiaoQu
 
 
@@ -175,12 +177,46 @@ class HtmlParser():
             ret_url_list.append(url)
         return ret_url_list
 
-    def get_html_house_detail(self, house_id, html_body, update_batch):
+    def __string_get_huxing_info(self, text):
+        """
+        提取户型信息
+        """
+        # 房屋户型2室1厅1厨1卫
+
+        bath_room = 0
+        kitchen_room = 0
+        living_room = 0
+        bed_room = 0
+
+        if isinstance(text, str):
+            text = text.decode('utf-8')
+        elif isinstance(text, unicode):
+            pass
+        else:
+            self.log.error("unknow type: %s" % (text))
+            return bed_room, living_room, kitchen_room, bath_room
+
+        text_list = list(text)
+        text_list.reverse()
+        prev = ""
+
+        for i in text_list:
+            if prev == u"卫" and int(i) >= 0:
+                bath_room = i
+            if prev == u"厨" and int(i) >= 0:
+                kitchen_room = i
+            if prev == u"厅" and int(i) >= 0:
+                living_room = i
+            if prev == u"室" and int(i) >= 0:
+                bed_room = i
+            prev = i
+        return bed_room, living_room, kitchen_room, bath_room
+
+    def get_html_house_detail(self, xiaoqu_id, house_id, html_body, update_batch):
         """
         从html 内提取房源详细信息
         """
 
-        house_id = house_id
         # 标题
         house_title = ""
         # 好房
@@ -190,8 +226,10 @@ class HtmlParser():
         # 单价
         price_unit = 0
         # 房屋户型
-        bed_room = 1
-        living_room = 1
+        bed_room = 0
+        living_room = 0
+        kitchen_room = 0
+        bath_room = 0
         # 建筑面积
         house_size = 0.0
         # 房屋朝向
@@ -199,79 +237,79 @@ class HtmlParser():
         # 配备电梯
         have_elevator = False
         # 挂牌时间
-        listing_time = None
+        listing_time = "1970-01-01"
 
         # title
         bs = BeautifulSoup(html_body, "html.parser", from_encoding="utf-8")
         house_title = bs.find("h1", {"class": "main"}).get_text()
-        print house_title
 
         # is_good_house
         html_a = bs.find("a", {"class": "haofangInfo CLICKDATA VIEWDATA"})
         if html_a:
             is_good_house = True
-        print is_good_house
 
         # price_total
         price_html = bs.find("div", {"class": "price"})
         price_total = int("".join(price_html.find("span", {"class": "total"}).string)) * 10000
-        # price_unit
 
+        # price_unit
         price_unit_text = price_html.find("div", {"class": "unitPrice"}).get_text()
         price_unit = int(price_unit_text.split(u"元")[0])
-        print price_unit
 
-        return
+        # 房屋基础信息
+        introContent = bs.find("div", {"class": "introContent"})
+        base_list = introContent.findAll("li")
+        for li in base_list:
+            if "".join(li.find("span").string) == u"房屋户型":
+                li.find("span").extract()
+                huxing = li.get_text()
+                bed_room, living_room, kitchen_room, bath_room = self.__string_get_huxing_info(huxing)
+                continue
 
-        ershoufang_data = []
-        communityName = "null"
-        areaName = "null"
-        total = "null"
-        unitPriceValue = "null"
+            if "".join(li.find("span").string) == u"建筑面积":
+                li.find("span").extract()
+                house_size = float(li.get_text().replace(u"㎡", ""))
+                continue
 
-        tag_com = bs.find("div", {"class": "communityName"}).find("a")
+            # house_orientation
+            if "".join(li.find("span").string) == u"房屋朝向":
+                li.find("span").extract()
+                house_orientation = li.get_text().replace(" ", "")
+                continue
 
-        tag_total = bs.find("span", {"class": "total"})
-        if tag_total is not None:
-            total = tag_total.get_text()
-        else:
-            self.log.error("页面解析(detail)：找不到total标签！")
+            # have_elevator  配备电梯
+            if "".join(li.find("span").string) == u"配备电梯":
+                li.find("span").extract()
+                status = li.get_text().replace(" ", "")
+                if status == u"有":
+                    have_elevator = True
+                continue
 
-        tag_unit = bs.find("span", {"class": "unitPriceValue"})
-        if tag_unit is not None:
-            unitPriceValue = tag_unit.get_text()
-        else:
-            self.log.error("页面解析(detail)：找不到total标签！")
+        # 房屋交易属性
+        transaction = bs.find("div", {"class": "transaction"})
+        base_list = transaction.findAll("li")
+        for li in base_list:
+            if "".join(li.find("span").string) == u"挂牌时间":
+                li.find("span").extract()
+                date_text = li.get_text().replace("\n", "")
+                listing_time = datetime.datetime.strptime(date_text, "%Y-%m-%d")
+                break
 
-        ershoufang_data.append(id)
-        ershoufang_data.append(communityName)
-        ershoufang_data.append(areaName)
-        ershoufang_data.append(total)
-        ershoufang_data.append(unitPriceValue)
+        house = House()
+        house.xiaoqu_id = xiaoqu_id
+        house.house_id = house_id
+        house.update_batch = update_batch
+        house.house_title = house_title
+        house.is_good_house = is_good_house
+        house.price_total = price_total
+        house.price_unit = price_unit
+        house.bed_room = bed_room
+        house.living_room = living_room
+        house.kitchen_room = kitchen_room
+        house.bath_room = bath_room
+        house.house_size = house_size
+        house.house_orientation = house_orientation
+        house.have_elevator = have_elevator
+        house.listing_time = listing_time
 
-        # print(bsObj.find("div",{"class":"introContent"}).find("div",{"class":"base"}).find("div",{"class":"content"}).ul)
-        counta = 12
-        for a_child in bs.find("div", {"class": "introContent"}).find("div", {"class": "base"}).find("div", {
-            "class": "content"}).ul.findAll("li"):
-            # print(child1)
-            [s.extract() for s in a_child("span")]
-            ershoufang_data.append(a_child.get_text())
-            counta = counta - 1
-
-        while counta > 0:
-            ershoufang_data.append("null")
-            counta = counta - 1
-
-        countb = 8
-        for b_child in bs.find("div", {"class": "introContent"}).find("div", {"class": "transaction"}).find("div", {
-            "class": "content"}).ul.findAll("li"):
-            information = b_child.span.next_sibling.next_sibling.get_text()
-            ershoufang_data.append(information)
-            countb = countb - 1
-
-        while countb > 0:
-            ershoufang_data.append("null")
-            countb = countb - 1
-
-        self.log.info("2.3 页面解析(detail)：页面解析成功！")
-        return ershoufang_data
+        return house
