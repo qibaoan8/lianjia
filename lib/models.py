@@ -5,7 +5,7 @@
 # Copyright (c) 2018 alibaba-inc. All Rights Reserved
 # 
 ########################################################################
- 
+
 """
 File: models.py
 Author: mushi(mushi.hgx@alibaba-inc.com)
@@ -28,6 +28,7 @@ class BaseModel(object):
     """
 
     """
+
     def __init__(self, schema=None):
         """
 
@@ -36,6 +37,18 @@ class BaseModel(object):
         self.table = None
         self.schema = schema
         self._init_db()
+
+    def json_to_object(cls, _input):
+        """
+        将json转换成对象数据
+        """
+        raise Exception("master add function json_to_object ")
+
+    def object_to_json(cls, _input):
+        """
+        将对象转换成json
+        """
+        raise Exception("master add function object_to_json ")
 
     def all(self, limit=200, dictionary=True):
         """
@@ -49,7 +62,7 @@ class BaseModel(object):
         limit_str = self.__parse_limit(limit)
         sql = "select * from %s %s" % (self.table, limit_str)
         ret = self.query(sql, dictionary=dictionary)
-        return ret
+        return self.json_to_object(ret)
 
     def get(self, limit=0, offset=0, dictionary=True, **kwargs):
         """
@@ -64,7 +77,8 @@ class BaseModel(object):
         """
         if kwargs == {}:
             kwargs = None
-        return self.filter(cons=kwargs, limit=limit, offset=offset, dictionary=dictionary)
+        ret = self.filter(cons=kwargs, limit=limit, offset=offset, dictionary=dictionary)
+        return self.json_to_object(ret)
 
     def filter(self, cons, cols=None, order=None, limit=0, offset=0, dictionary=True):
         """
@@ -85,7 +99,7 @@ class BaseModel(object):
         limit_str = self.__parse_limit(limit=limit, offset=offset)
         sql = "select %s from %s %s %s %s" % (cols_str, self.table, con_str, order_str, limit_str)
         ret = self.query(sql, dictionary=dictionary)
-        return ret
+        return self.json_to_object(ret)
 
     def query(self, sql, dictionary=True):
         """
@@ -95,7 +109,7 @@ class BaseModel(object):
         :return:
         """
         ret = self.db_handler.query(sql, dictionary=dictionary)
-        return ret
+        return self.json_to_object(ret)
 
     def insert(self, data, on_duplicate_update_key=None):
         """
@@ -107,9 +121,10 @@ class BaseModel(object):
         """
         self.__pre_check()
 
-        #sql格式：insert into xxx (a, b, c) values(%s, %s, %s)
+        # sql格式：insert into xxx (a, b, c) values(%s, %s, %s)
         if len(data) <= 0:
             return -1
+        data = self.object_to_json(data)
         key_list = data[0].keys()
         keys = ",".join(key_list)
         values = ",".join(["%s" for i in range(len(data[0]))])
@@ -118,7 +133,7 @@ class BaseModel(object):
             parts = ['{key}=values({key})'.format(key=key) for key in on_duplicate_update_key]
             sql = '%s ON DUPLICATE KEY UPDATE %s' % (sql, ', '.join(parts))
 
-        #格式： [("a", "a", a), ("b", "b", b)]
+        # 格式： [("a", "a", a), ("b", "b", b)]
         data_list = []
         for item in data:
             tmp_list = []
@@ -142,21 +157,22 @@ class BaseModel(object):
         """
         self.__pre_check()
 
-        #sql格式：replace into xxx (a, b, c) values(%s, %s, %s)
+        # sql格式：replace into xxx (a, b, c) values(%s, %s, %s)
         if len(data) <= 0:
             return -1
+        data = self.object_to_json(data)
         key_list = data[0].keys()
         keys = ",".join(key_list)
         values = ",".join(["%s" for i in range(len(data[0]))])
         sql = "replace into %s (%s) values(%s)" % (self.table, keys, values)
 
-        #格式： [("a", "a", a), ("b", "b", b)]
+        # 格式： [("a", "a", a), ("b", "b", b)]
         data_list = []
         for item in data:
             tmp_list = []
             for k in key_list:
                 if type(item[k]) in [dict, list, tuple]:
-                    tmp_list.append(json.dumps(item[k], cls=ResponseJsonSerializer,ensure_ascii=False))
+                    tmp_list.append(json.dumps(item[k], cls=ResponseJsonSerializer, ensure_ascii=False))
                     continue
                 tmp_list.append(item[k])
             data_list.append(tuple(tmp_list))
@@ -173,6 +189,7 @@ class BaseModel(object):
         """
         con_str = self._parse_cons(cons)
         tmp_list = []
+        data = self.object_to_json(data)
         for k, v in data.items():
             v_type = type(v)
             if v_type in [int, long, float]:
@@ -196,7 +213,7 @@ class BaseModel(object):
         con_str = self._parse_cons(cons)
         if "where" not in con_str:
             return False
-        sql = 'DELETE FROM %s %s' %(self.table, con_str)
+        sql = 'DELETE FROM %s %s' % (self.table, con_str)
         ret = self.db_handler.execute(sql)
         return ret
 
@@ -210,7 +227,8 @@ class BaseModel(object):
 
         if sql.lower().startswith("select"):
             return self.query(sql, dictionary=dictionary)
-        return self.db_handler.execute(sql)
+        ret = self.db_handler.execute(sql)
+        return self.json_to_object(ret)
 
     def _parse_cons(self, cons):
         """
@@ -227,7 +245,7 @@ class BaseModel(object):
             if isinstance(v, int) or isinstance(v, float):
                 con = "%s=%s " % (k, v)
             elif isinstance(v, list) and len(v) > 1:
-                con = "%s in (%s) " %(k, self.__parse_in(v))
+                con = "%s in (%s) " % (k, self.__parse_in(v))
             elif isinstance(v, list) and len(v) == 1:
                 fix = self.__get_fix(v[0])
                 con = "%s=%s%s%s " % (k, fix, v[0], fix)
@@ -281,7 +299,7 @@ class BaseModel(object):
         #1TODO nothing
         """
         if self.table is None:
-            raise ENotImplement("DB table is None") 
+            raise ENotImplement("DB table is None")
 
         if self.db_handler is None:
             self._init_db()
@@ -307,5 +325,5 @@ class BaseModel(object):
         self.uri = 'mysql+mysqlconnector://root:root@127.0.0.1:3306/house'
 
         db = parse_url(self.uri)
-        self.db_handler = mysqldb.Connection(db.server, db.database, user=db.username, password=db.password, **db.kwargs)
-
+        self.db_handler = mysqldb.Connection(db.server, db.database, user=db.username, password=db.password,
+                                             **db.kwargs)
