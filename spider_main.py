@@ -73,7 +73,6 @@ class SpiderMain():
                 xiaoqu_list = self.parser.get_html_xiaoqu_list(html_body, update_batch)
                 ret = xiaoqu_db.insert(xiaoqu_list, on_duplicate_update_key=xiaoqu_db.update_key)
                 self.log.info("xiaoqu db inster ret %s" % ret)
-                return
         return
 
     def craw(self, root_url):
