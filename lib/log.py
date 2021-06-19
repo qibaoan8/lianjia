@@ -23,7 +23,7 @@ class MyLog():
         # time = (" " + str(now.hour) + "_" +
         # str(now.minute) + "_" + str(now.second))
         # 每天生成一个新的文件
-        filepath = (filepath + "\\" + str(datetime.date.today()) + " log.txt")
+        filepath = (filepath + "/" + str(datetime.date.today()) + "log.txt")
         self.fh = logging.FileHandler(filepath)
         self.fh.setLevel(logging.DEBUG)
 

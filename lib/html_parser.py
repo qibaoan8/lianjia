@@ -191,7 +191,7 @@ class HtmlParser():
             xiaoqu.price = price  # 均价
             xiaoqu.houses = houses  # 在售数量
             ret_xiaoqu.append(xiaoqu)
-            self.log.logger.info(xiaoqu)
+            self.log.logger.info(repr(xiaoqu))
 
         self.log.logger.info("1.3 PG页面解析：pg页面解析成功！")
         print("1.3 页面解析：pg页面解析成功！")
@@ -214,6 +214,3 @@ class HtmlParser():
         return int(span.text)
 
 
-if __name__ == '__main__':
-    parse = HtmlParser()
-    print parse.lianjia_url_to_id("https://bj.lianjia.com/xiaoqu/1120025429663835/")
