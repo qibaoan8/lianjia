@@ -22,7 +22,7 @@ class HtmlDownloader():
 
     def __init__(self):
         """构造函数，初始化属性"""
-        self.log = MyLog("html_downloader", "logs")
+        self.log = MyLog("html_downloader", "logs").getMyLogger()
         self.fuse = Fuse()
         self.user_agent = [
             "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0",
@@ -38,11 +38,11 @@ class HtmlDownloader():
 
     def download(self, url):
         """网页下载函数"""
-        self.log.logger.info("get url : %s" % url)
+        self.log.info("get url : %s" % url)
         self.fuse.check()
 
         if url is None:
-            self.log.logger.error("页面下载：url为空!!!")
+            self.log.error("页面下载：url为空!!!")
             return None
 
         # 随机变换user-agent
@@ -59,9 +59,8 @@ class HtmlDownloader():
         r = requests.get(url, headers=headers)
 
         if r.status_code != 200:
-            self.log.logger.error("页面下载：响应错误：%d" % r.status_code)
+            self.log.error("页面下载：响应错误：%d" % r.status_code)
             return None
 
-        self.log.logger.info("页面下载：成功!")
-        print("页面下载：成功!")
+        self.log.info("页面下载：成功!")
         return r.text

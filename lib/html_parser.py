@@ -16,13 +16,12 @@ class HtmlParser():
 
     def __init__(self):
         """构造函数，初始化属性"""
-        self.log = MyLog("html_parser", "../logs")
+        self.log = MyLog("html_parser", "../logs").getMyLogger()
 
     def get_ershoufang_data(self, html_cont, id):
         """获取二手房页面详细数据"""
         if html_cont is None:
-            self.log.logger.error("页面解析(detail)：传入页面为空！")
-            print("页面解析(detail)：传入页面为空！")
+            self.log.error("页面解析(detail)：传入页面为空！")
             return
 
         ershoufang_data = []
@@ -37,25 +36,25 @@ class HtmlParser():
         if tag_com is not None:
             communityName = tag_com.get_text()
         else:
-            self.log.logger.error("页面解析(detail)：找不到communityName标签！")
+            self.log.error("页面解析(detail)：找不到communityName标签！")
 
         tag_area = bsObj.find("div", {"class": "areaName"}).find("span", {"class": "info"}).find("a")
         if tag_area is not None:
             areaName = tag_area.get_text()
         else:
-            self.log.logger.error("页面解析(detail)：找不到areaName标签！")
+            self.log.error("页面解析(detail)：找不到areaName标签！")
 
         tag_total = bsObj.find("span", {"class": "total"})
         if tag_total is not None:
             total = tag_total.get_text()
         else:
-            self.log.logger.error("页面解析(detail)：找不到total标签！")
+            self.log.error("页面解析(detail)：找不到total标签！")
 
         tag_unit = bsObj.find("span", {"class": "unitPriceValue"})
         if tag_unit is not None:
             unitPriceValue = tag_unit.get_text()
         else:
-            self.log.logger.error("页面解析(detail)：找不到total标签！")
+            self.log.error("页面解析(detail)：找不到total标签！")
 
         ershoufang_data.append(id)
         ershoufang_data.append(communityName)
@@ -87,15 +86,13 @@ class HtmlParser():
             ershoufang_data.append("null")
             countb = countb - 1
 
-        self.log.logger.info("2.3 页面解析(detail)：页面解析成功！")
-        print("2.3 页面解析(detail)：页面解析成功！")
+        self.log.info("2.3 页面解析(detail)：页面解析成功！")
         return ershoufang_data
 
     def get_erhoufang_urls(self, html_cont):
         """获取二手房页面的链接"""
         if html_cont is None:
-            self.log.logger.error("页面解析(page)：pg页面为空！")
-            print("页面解析(page)：pg页面为空！")
+            self.log.error("页面解析(page)：pg页面为空！")
             return
 
         ershoufang_urls = set()
@@ -112,7 +109,7 @@ class HtmlParser():
                 last_str = last_str[1:]
             return last_str
         except Exception as e:
-            print "url split error", repr(e)
+            self.log.error("url split error", repr(e))
         return ""
 
     def get_html_xiaoqu_list(self, html, update_batch):
@@ -134,8 +131,7 @@ class HtmlParser():
         ret_xiaoqu = []
 
         if html is None:
-            self.log.logger.error("页面解析(page)：pg页面为空！")
-            print("页面解析(page)：pg页面为空！")
+            self.log.error("页面解析(page)：pg页面为空！")
             return
 
         bsObj = BeautifulSoup(html, "html.parser", from_encoding="utf-8")
@@ -196,10 +192,9 @@ class HtmlParser():
             xiaoqu.houses = houses  # 在售数量
             xiaoqu.update_batch = update_batch  # 爬取批次
             ret_xiaoqu.append(xiaoqu)
-            self.log.logger.info(repr(xiaoqu))
+            self.log.info(repr(xiaoqu))
 
-        self.log.logger.info("1.3 PG页面解析：pg页面解析成功！")
-        print("1.3 页面解析：pg页面解析成功！")
+        self.log.info("1.3 PG页面解析：pg页面解析成功！")
         return ret_xiaoqu
 
     def get_html_xiaoqu_count(self, html):
@@ -207,8 +202,7 @@ class HtmlParser():
         获取页面内的小区总数
         """
         if html is None:
-            self.log.logger.error("页面解析(page)：pg页面为空！")
-            print("页面解析(page)：pg页面为空！")
+            self.log.error("页面解析(page)：pg页面为空！")
             return
 
         bsObj = BeautifulSoup(html, "html.parser", from_encoding="utf-8")

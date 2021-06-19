@@ -23,7 +23,7 @@ class SpiderMain():
     def __init__(self):
         """构造函数，初始化属性"""
         self.urls = UrlManager()
-        self.log = MyLog("spider_main", "logs")
+        self.log = MyLog("spider_main", "logs").getMyLogger()
         self.downloader = HtmlDownloader()
         self.parser = HtmlParser()
         # self.util=utill.DBConn()
@@ -57,18 +57,18 @@ class SpiderMain():
             area_zh = area_map.get(area, "")
             exsit_count = len(xiaoqu_db.filter({"area": area_zh}))
             if exsit_count >= total_count:
-                self.log.logger.info("%s 小区数据全部存在" % area_zh)
+                self.log.info("%s 小区数据全部存在" % area_zh)
                 continue
 
             start_page = int(exsit_count / page_size) + 1
-            self.log.logger.info("%s 小区从第%s页开始获取" % (area_zh, start_page))
+            self.log.info("%s 小区从第%s页开始获取" % (area_zh, start_page))
 
             for page in range(start_page, int(math.ceil(total_count / page_size)) + 1):
                 url = "%spg%s/" % (url_meta, page)
                 html_body = self.downloader.download(url)
                 xiaoqu_list = self.parser.get_html_xiaoqu_list(html_body, update_batch)
                 ret = xiaoqu_db.insert(xiaoqu_list, on_duplicate_update_key=xiaoqu_db.update_key)
-                print "xiaoqu db inster ret %s" % ret
+                self.log.info("xiaoqu db inster ret %s" % ret)
                 return
         return
 
@@ -90,20 +90,19 @@ class SpiderMain():
             for num in range(1, pg_sum + 1):
                 # 1.1 拼接页面地址: https://nj.lianjia.com/ershoufang/gulou/pg2/
                 pg_url = root_url + area + "/pg" + str(num) + "/"
-                self.log.logger.info("1.1 拼接页面地址：" + pg_url)
-                print("1.1 拼接页面地址：" + pg_url)
+                self.log.info("1.1 拼接页面地址：" + pg_url)
                 # 1.2 启动下载器,下载页面.
                 try:
                     html_cont = self.downloader.download(pg_url)
                 except Exception as e:
-                    self.log.logger.error("1.2 下载页面出现异常:" + repr(e))
+                    self.log.error("1.2 下载页面出现异常:" + repr(e))
                     time.sleep(60 * 30)
                 else:
                     # 1.3 解析PG页面，获得二手房详情页面的链接,并将所有链接放入URL管理模块
                     try:
                         ershoufang_urls = self.parser.get_erhoufang_urls(html_cont)
                     except Exception as e:
-                        self.log.logger.error("1.3 页面解析出现异常:" + repr(e))
+                        self.log.error("1.3 页面解析出现异常:" + repr(e))
                     else:
                         self.urls.add_new_urls(ershoufang_urls)
                         # 暂停0~3秒的整数秒，时间区间：[0,3]
@@ -117,17 +116,15 @@ class SpiderMain():
             # 2.1 获取url
             try:
                 detail_url = self.urls.get_new_url()
-                self.log.logger.info("2.1 二手房页面地址：" + detail_url)
-                print("2.1 二手房页面地址：" + detail_url)
+                self.log.info("2.1 二手房页面地址：" + detail_url)
             except Exception as e:
-                print("2.1 拼接地址出现异常")
-                self.log.logger.error("2.1 拼接地址出现异常:" + detail_url)
+                self.log.error("2.1 拼接地址出现异常:" + detail_url)
 
             # 2.2 下载页面
             try:
                 detail_html = self.downloader.download(detail_url)
             except Exception as e:
-                self.log.logger.error("2.2 下载页面出现异常:" + repr(e))
+                self.log.error("2.2 下载页面出现异常:" + repr(e))
                 self.urls.add_new_url(detail_url)
                 time.sleep(60 * 30)
             else:
@@ -135,7 +132,7 @@ class SpiderMain():
                 try:
                     ershoufang_data = self.parser.get_ershoufang_data(detail_html, id)
                 except Exception as e:
-                    self.log.logger.error("2.3 解析页面出现异常:" + repr(e))
+                    self.log.error("2.3 解析页面出现异常:" + repr(e))
                 else:
                     pass
 
