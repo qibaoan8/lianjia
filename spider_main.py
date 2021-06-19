@@ -4,12 +4,17 @@ Created on Tue Mar 20 10:35:07 2018
 
 @author: zhangying
 """
+
 from lib.downloader import HtmlDownloader
+from lib.model_table import XiaoQuModel
 from lib.url_manager import UrlManager
 from lib.log import MyLog
 from lib.html_parser import HtmlParser
 import time
 import random
+import math
+
+xiaoqu_db = XiaoQuModel()
 
 
 class SpiderMain():
@@ -40,12 +45,20 @@ class SpiderMain():
         ]
 
         for area in areas_list:
-            url = "https://bj.lianjia.com/xiaoqu/dongcheng/"
+            url_meta = "https://bj.lianjia.com/xiaoqu/%s/" % area
             # https://bj.lianjia.com/xiaoqu/dongcheng/pg2/
-            xiaoqu_list = []
-            html_body = self.downloader.download()
-
-
+            html_body = self.downloader.download(url_meta)
+            count = self.parser.get_html_xiaoqu_count(html_body)
+            if count <= 0:
+                continue
+            page_size = 30.0
+            for page in range(1, int(math.ceil(count / page_size)) + 1):
+                url = "%spg%s/" % (url_meta, page)
+                html_body = self.downloader.download(url)
+                xiaoqu_list = self.parser.get_html_xiaoqu_list(html_body)
+                ret = xiaoqu_db.insert(xiaoqu_list)
+                print "xiaoqu db inster ret %s" % ret
+        return
 
     def craw(self, root_url):
         """爬虫入口函数"""
@@ -116,9 +129,6 @@ class SpiderMain():
 
 
 if __name__ == "__main__":
-    # 设定爬虫入口URL
-    root_url = "https://bj.lianjia.com/ershoufang/"
     # 初始化爬虫对象
     obj_spider = SpiderMain()
-    # 启动爬虫
-    obj_spider.craw(root_url)
+    obj_spider.get_xiaoqu_list()

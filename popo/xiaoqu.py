@@ -9,17 +9,28 @@ File: xiaoqu.py
 Author: wang.gaofei(wang.gaofei@alibaba-inc.com)
 Date: 2021/6/19
 """
+import datetime
 import json
 
 
 class XiaoQu():
-    xiaoqu_id = 0
-    area = ""
-    name = ""
-    turnover = ""  # 成交量
-    price = 0  # 均价
-    houses = 0  # 在售数量
-    other = {}
+
+    def __init__(self):
+        self.id = 0
+        self.create_time = datetime.datetime.now()
+        self.xiaoqu_id = 0
+        self.area = ""
+        self.area_2 = ""
+        self.xiaoqu_name = ""
+        self.build_year = 0
+        self.turnover = ""  # 成交量
+        self.price = 0  # 均价
+        self.houses = 0  # 在售数量
+        self.other = {}
+
+    def __str__(self):
+        return json.dumps(self.__dict__, ensure_ascii=False)
+
 
 if __name__ == '__main__':
     # xiaoqu = XiaoQu()
@@ -35,6 +46,6 @@ if __name__ == '__main__':
     xiaoqu.__dict__ = json.loads(a)
     print xiaoqu
     print xiaoqu.other
-    print xiaoqu.name
+    print xiaoqu.xiaoqu_name
     print xiaoqu.area
-
+    print xiaoqu

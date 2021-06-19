@@ -14,4 +14,9 @@ from lib.model_table import XiaoQuModel
 if __name__ == '__main__':
     xiaoqu = XiaoQuModel()
     all = xiaoqu.all()
+    for i in all:
+        print i
+        print i.name
+        print i.area
+        print i.price
     print all
