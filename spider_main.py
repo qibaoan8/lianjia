@@ -6,7 +6,7 @@ Created on Tue Mar 20 10:35:07 2018
 """
 from config.conf import area_map
 from lib.downloader import HtmlDownloader
-from lib.model_table import XiaoQuModel
+from lib.model_table import XiaoQuModel, HouseModel
 from lib.url_manager import UrlManager
 from lib.log import MyLog
 from lib.html_parser import HtmlParser
@@ -19,6 +19,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 xiaoqu_db = XiaoQuModel()
+house_db = HouseModel()
 
 
 class SpiderMain():
@@ -31,6 +32,53 @@ class SpiderMain():
         self.downloader = HtmlDownloader()
         self.parser = HtmlParser()
         # self.util=utill.DBConn()
+
+    def get_house_list(self, update_batch):
+        """
+        获取房源
+        """
+        sql = "select * from %s WHERE houses > 0 and update_batch = %s" % (xiaoqu_db.table, update_batch)
+        xiaoqu_list = xiaoqu_db.raw(sql)
+        if not xiaoqu_list:
+            self.log.warn("not fount xiaoqu")
+            return
+        for xiaoqu in xiaoqu_list:
+            # 查询已有房源
+            exsit_house_list = house_db.filter({"update_batch": update_batch, "xiaoqu_id": xiaoqu.xiaoqu_id},
+                                               cols=["xiaoqu_id", "house_id"])
+
+            # 记录所有房源id  exsit_house_id_list
+            exsit_house_id_list = []
+            if exsit_house_list:
+                for house in exsit_house_list:
+                    exsit_house_id_list.append(house.house_id)
+
+            # 获取线上房源
+            url_house_list = "https://bj.lianjia.com/ershoufang/c%s/" % xiaoqu.xiaoqu_id
+
+            house_list_html_body = self.downloader.download(url_house_list)
+            house_total_count = self.parser.get_html_house_count(house_list_html_body)
+
+            if house_total_count <= 0 or len(exsit_house_list) >= house_total_count:
+                # 如果没房源或者数据库内有，跳过
+                continue
+
+            page_size = 30.0
+
+            start_page = int(len(exsit_house_list) / page_size) + 1
+            self.log.info("%s 小区的房源从第%s页开始获取" % (xiaoqu.xiaoqu_name, start_page))
+
+            for page in range(start_page, int(math.ceil(house_total_count / page_size)) + 1):
+                url_house_list = "https://bj.lianjia.com/ershoufang/pg%sc%s/" % (page, xiaoqu.xiaoqu_id)
+                # https://bj.lianjia.com/ershoufang/pg2c1111027382209/
+                html_body = self.downloader.download(url_house_list)
+                house_url_list = self.parser.get_html_house_url_list(html_body)
+                for house_url in house_url_list:
+                    html_body = self.downloader.download(house_url)
+                    house = self.parser.get_html_house_detail(html_body, update_batch)
+                    ret = xiaoqu_db.insert([house], on_duplicate_update_key=house_db.update_key)
+                    self.log.info("house db inster ret %s" % ret)
+        return
 
     def get_xiaoqu_list(self, update_batch):
         """
@@ -143,4 +191,5 @@ class SpiderMain():
 if __name__ == "__main__":
     # 初始化爬虫对象
     obj_spider = SpiderMain()
-    obj_spider.get_xiaoqu_list(1)
+    # obj_spider.get_xiaoqu_list(1)
+    obj_spider.get_house_list()

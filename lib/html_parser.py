@@ -211,3 +211,12 @@ class HtmlParser():
         span = h2.find("span")
 
         return int(span.text)
+
+    def get_html_house_count(self, html_body):
+        pass
+
+    def get_html_house_detail(self, html_body, update_batch):
+        pass
+
+    def get_html_house_url_list(self, html_body):
+        pass

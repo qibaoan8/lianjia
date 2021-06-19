@@ -16,7 +16,8 @@ from lib.model_table import XiaoQuModel
 
 xiaoqu_db = XiaoQuModel()
 
-if __name__ == '__main__':
+
+def main_test_xiaoqu():
     xiaoqu_html = ""
     with open("xiaoqu.html") as f:
         xiaoqu_html = f.read()
@@ -26,3 +27,15 @@ if __name__ == '__main__':
     for i in ret_list:
         print i
     # xiaoqu_db.insert(ret_list)
+
+def main_test_house_list():
+    html = ""
+    with open("house_list.html") as f:
+        html = f.read()
+
+    hp = HtmlParser()
+    count = hp.get_html_house_count(html)
+    print count
+
+if __name__ == '__main__':
+    main_test_house_list()
