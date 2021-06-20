@@ -42,10 +42,17 @@ class SpiderMain():
         if not xiaoqu_list:
             self.log.warn("not fount xiaoqu")
             return
+        # 设置断点续传状态
         for xiaoqu in xiaoqu_list:
-            # 查询已有房源
-            exsit_house_list = house_db.filter({"update_batch": update_batch, "xiaoqu_id": xiaoqu.xiaoqu_id},
-                                               cols=["xiaoqu_id", "house_id"])
+
+            # 查询已有房源列表
+            exsit_house_list = house_db.filter({"update_batch": update_batch, "xiaoqu_id": xiaoqu.xiaoqu_id})
+            if len(exsit_house_list) >= xiaoqu.houses:
+                self.log.info("断点续传跳过小区: %s" % xiaoqu.xiaoqu_name)
+                continue
+            else:
+                self.log.info("断点续传放过小区: %s, exsit_house_list: %s , xiaoqu.houses: %s" % (
+                    xiaoqu.xiaoqu_name, len(exsit_house_list), xiaoqu.houses))
 
             # 记录所有房源id  exsit_house_id_list
             exsit_house_id_list = []
@@ -55,12 +62,19 @@ class SpiderMain():
 
             # 获取线上房源
             url_house_list = "https://bj.lianjia.com/ershoufang/c%s/" % xiaoqu.xiaoqu_id
-
             house_list_html_body = self.downloader.download(url_house_list)
             house_total_count = self.parser.get_html_house_count(house_list_html_body)
 
+            # 更新小区房源数量
+            if house_total_count != xiaoqu.houses:
+                self.log.info("更新小区数据，原房源数量：%s， 新房源数量：%s" % (xiaoqu.houses, house_total_count))
+                xiaoqu.houses = house_total_count
+                xiaoqu_db.update(xiaoqu, {"id": xiaoqu.id})
+
             if house_total_count <= 0 or len(exsit_house_list) >= house_total_count:
                 # 如果没房源或者数据库内有，跳过
+                self.log.info("断点续传再次跳过小区: %s , 判断的是在线房源数量 , house_total_count: %s, exsit_house_list: %s" % (
+                    xiaoqu.xiaoqu_name, house_total_count, len(exsit_house_list)))
                 continue
 
             page_size = 30.0

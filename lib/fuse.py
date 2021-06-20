@@ -23,7 +23,7 @@ class Fuse():
         self.used_count = 0
         # 时间周期 秒
         self.time_cycel = 1
-        self.max_use_count = 1
+        self.max_use_count = 5
 
     def check(self, sleep=0):
         """

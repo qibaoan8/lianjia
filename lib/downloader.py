@@ -62,5 +62,4 @@ class HtmlDownloader():
             self.log.error("页面下载：响应错误：%d" % r.status_code)
             return None
 
-        self.log.info("页面下载：成功!")
         return r.text
