@@ -210,7 +210,7 @@ class HtmlParser():
             prev = i
         return bed_room, living_room, kitchen_room, bath_room
 
-    def get_html_house_detail(self, xiaoqu_id, house_id, html_body, update_batch):
+    def get_html_house_detail(self, html_body):
         """
         从html 内提取房源详细信息
         """
@@ -294,9 +294,6 @@ class HtmlParser():
                 break
 
         house = House()
-        house.xiaoqu_id = xiaoqu_id
-        house.house_id = house_id
-        house.update_batch = update_batch
         house.house_title = house_title
         house.is_good_house = is_good_house
         house.price_total = price_total

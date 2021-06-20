@@ -7,6 +7,7 @@ Created on Tue Mar 20 10:35:07 2018
 from config.conf import area_map
 from lib.downloader import HtmlDownloader
 from lib.model_table import XiaoQuModel, HouseModel
+from lib.super_queue import Super_Queue
 from lib.url_manager import UrlManager
 from lib.log import MyLog
 from lib.html_parser import HtmlParser
@@ -87,14 +88,30 @@ class SpiderMain():
                 # https://bj.lianjia.com/ershoufang/pg2c1111027382209/
                 html_body = self.downloader.download(url_house_list)
                 house_url_list = self.parser.get_html_house_url_list(html_body)
-                for house_url in house_url_list:
-                    html_body = self.downloader.download(house_url)
-                    house_id = self.parser.lianjia_url_to_house_id(house_url)
-                    house = self.parser.get_html_house_detail(xiaoqu.xiaoqu_id, house_id, html_body, update_batch)
-                    self.log.info("get house: %s" % str(house))
-                    ret = house_db.insert([house], on_duplicate_update_key=house_db.update_key)
-                    self.log.info("house db inster ret %s" % ret)
+
+                # 多线程获取房源消息
+                sq = Super_Queue(5)
+                house_list = sq.start(self.get_xiaoqu_detail,house_url_list)
+                for n in range(len(house_list)):
+                    house_list[n].xiaoqu_id = xiaoqu.xiaoqu_id
+                    house_list[n].update_batch = update_batch
+                    self.log.info("get house: %s" % str(house_list[n]))
+                # 写库
+                ret = house_db.insert(house_list, on_duplicate_update_key=house_db.update_key)
+                self.log.info("house db inster ret %s" % ret)
         return
+
+    def get_xiaoqu_detail(self, url):
+        """
+        获取房源详细信息
+        :param url:
+        :return:
+        """
+        html_body = self.downloader.download(url)
+        house_id = self.parser.lianjia_url_to_house_id(url)
+        house = self.parser.get_html_house_detail(html_body)
+        house.house_id = house_id
+        return house
 
     def get_xiaoqu_list(self, update_batch):
         """
