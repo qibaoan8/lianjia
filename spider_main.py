@@ -90,7 +90,7 @@ class SpiderMain():
                 house_url_list = self.parser.get_html_house_url_list(html_body)
 
                 # 多线程获取房源消息
-                sq = Super_Queue(5)
+                sq = Super_Queue(30)
                 house_list = sq.start(self.get_xiaoqu_detail,house_url_list)
                 for n in range(len(house_list)):
                     house_list[n].xiaoqu_id = xiaoqu.xiaoqu_id
